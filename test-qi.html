@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test de Raisonnement Logique Visuel - IQ Test</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+    h1, h2 { text-align: center; }
+    #timer { font-weight: bold; text-align: center; margin-bottom: 10px; }
+    .sequence, .choices { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
+    .canvas-item { margin: 0 10px; cursor: pointer; border: 2px solid transparent; border-radius: 4px; }
+    .canvas-item.selected { border-color: #007BFF; }
+    button { padding: 10px 20px; border: none; border-radius: 4px; background: #007BFF; color: #fff; cursor: pointer; display: block; margin: 10px auto; }
+    button:disabled { background: #999; cursor: not-allowed; }
+    .hidden { display: none; }
+    .result { text-align: center; }
+    p.notice { font-size: 0.9em; color: #666; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test de Raisonnement Logique Visuel</h1>
+    <div id="start-screen">
+      <p class="notice">Ce test évalue le raisonnement logique visuel à partir de séquences de figures. Il est indicatif et non clinique.</p>
+      <button id="start-btn">Commencer le test</button>
+    </div>
+    <div id="test-screen" class="hidden">
+      <h2>Question <span id="current-index"></span> / <span id="total-questions"></span></h2>
+      <p id="timer">Temps restant: <span id="time-remaining"></span> s</p>
+      <div id="question-area"></div>
+      <button id="next-btn" disabled>Suivant</button>
+    </div>
+    <div id="result-screen" class="hidden">
+      <h2>Résultat</h2>
+      <p class="result" id="score-text"></p>
+      <p class="result" id="iq-text"></p>
+      <p class="result" id="level-text"></p>
+      <button id="restart-btn">Reprendre le test</button>
+    </div>
+  </div>
+  <script>
+    function drawPolygon(ctx, sides, size) {
+      const width = ctx.canvas.width;
+      const height = ctx.canvas.height;
+      const cx = width / 2;
+      const cy = height / 2;
+      const radius = size;
+      ctx.clearRect(0, 0, width, height);
+      ctx.beginPath();
+      for (let i = 0; i < sides; i++) {
+        const angle = (2 * Math.PI * i / sides) - Math.PI / 2;
+        const x = cx + radius * Math.cos(angle);
+        const y = cy + radius * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.strokeStyle = '#333';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+
+    const questions = [
+      { seq: [3,4,5], choices: [6,7,8,9], answer: 6 },
+      { seq: [4,5,6], choices: [7,8,9,5], answer: 7 },
+      { seq: [5,6,7], choices: [8,6,9,4], answer: 8 },
+      { seq: [6,7,8], choices: [9,8,10,11], answer: 9 },
+      { seq: [7,8,9], choices: [10,11,9,8], answer: 10 },
+      { seq: [8,9,10], choices: [11,12,9,7], answer: 11 },
+      { seq: [3,5,7], choices: [9,11,13,10], answer: 9 },
+      { seq: [4,7,10], choices: [13,16,14,12], answer: 13 },
+      { seq: [5,9,13], choices: [17,16,15,14], answer: 17 },
+      { seq: [6,11,16], choices: [21,20,19,18], answer: 21 },
+      { seq: [3,6,12], choices: [24,18,15,21], answer: 24 },
+      { seq: [4,8,16], choices: [32,24,20,12], answer: 32 },
+      { seq: [5,10,20], choices: [40,25,30,35], answer: 40 },
+      { seq: [6,12,24], choices: [48,36,30,42], answer: 48 },
+      { seq: [7,14,28], choices: [56,42,49,35], answer: 56 }
+    ];
+
+    let currentIndex = 0;
+    let score = 0;
+    let timerInterval;
+    const timePerQuestion = 45;
+
+    const startBtn = document.getElementById('start-btn');
+    const startScreen = document.getElementById('start-screen');
+    const testScreen = document.getElementById('test-screen');
+    const currentIndexEl = document.getElementById('current-index');
+    const totalQuestionsEl = document.getElementById('total-questions');
+    const timerEl = document.getElementById('time-remaining');
+    const questionArea = document.getElementById('question-area');
+    const nextBtn = document.getElementById('next-btn');
+    const resultScreen = document.getElementById('result-screen');
+    const scoreText = document.getElementById('score-text');
+    const iqText = document.getElementById('iq-text');
+    const levelText = document.getElementById('level-text');
+    const restartBtn = document.getElementById('restart-btn');
+
+    function startTest() {
+      startScreen.classList.add('hidden');
+      testScreen.classList.remove('hidden');
+      currentIndex = 0;
+      score = 0;
+      totalQuestionsEl.textContent = questions.length;
+      showQuestion();
+    }
+
+    function showQuestion() {
+      clearInterval(timerInterval);
+      nextBtn.disabled = true;
+      questionArea.innerHTML = '';
+      currentIndexEl.textContent = currentIndex + 1;
+      let timeLeft = timePerQuestion;
+      timerEl.textContent = timeLeft;
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        timerEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          recordAnswer(null);
+        }
+      }, 1000);
+
+      const q = questions[currentIndex];
+      const seqDiv = document.createElement('div'); seqDiv.classList.add('sequence');
+      q.seq.forEach(sides => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80; canvas.height = 80;
+        canvas.classList.add('canvas-item');
+        const ctx = canvas.getContext('2d');
+        drawPolygon(ctx, sides, 30);
+        seqDiv.appendChild(canvas);
+      });
+      questionArea.appendChild(seqDiv);
+
+      const choicesDiv = document.createElement('div'); choicesDiv.classList.add('choices');
+      q.choices.forEach(choiceSides => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 80; canvas.height = 80;
+        canvas.classList.add('canvas-item');
+        const ctx = canvas.getContext('2d');
+        drawPolygon(ctx, choiceSides, 30);
+        canvas.dataset.choice = choiceSides;
+        canvas.addEventListener('click', () => {
+          document.querySelectorAll('.canvas-item').forEach(c=>c.classList.remove('selected'));
+          canvas.classList.add('selected');
+          nextBtn.disabled = false;
+        });
+        choicesDiv.appendChild(canvas);
+      });
+      questionArea.appendChild(choicesDiv);
+      nextBtn.onclick = () => {
+        const selected = document.querySelector('.canvas-item.selected');
+        const userChoice = selected ? parseInt(selected.dataset.choice) : null;
+        recordAnswer(userChoice);
+      };
+    }
+
+    function recordAnswer(choice) {
+      clearInterval(timerInterval);
+      const q = questions[currentIndex];
+      if (choice !== null && choice === q.answer) score++;
+      currentIndex++;
+      if (currentIndex < questions.length) showQuestion();
+      else showResult();
+    }
+
+    function showResult() {
+      testScreen.classList.add('hidden');
+      resultScreen.classList.remove('hidden');
+      scoreText.textContent = `Vous avez ${score} bonnes réponses sur ${questions.length}.`;
+      const ratio = score / questions.length;
+      const estimatedIQ = Math.round(70 + ratio * 60);
+      iqText.textContent = `IQ estimé (approx.): ${estimatedIQ}`;
+      let level;
+      if (estimatedIQ >= 130) level = 'Très supérieur (HPI possible)';
+      else if (estimatedIQ >= 120) level = 'Supérieur';
+      else if (estimatedIQ >= 110) level = 'Légèrement supérieur';
+      else if (estimatedIQ >= 90) level = 'Moyen';
+      else level = 'Inférieur à la moyenne';
+      levelText.textContent = `Niveau estimé : ${level}`;
+    }
+
+    startBtn.addEventListener('click', startTest);
+    restartBtn.addEventListener('click', () => {
+      resultScreen.classList.add('hidden');
+      startScreen.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>
