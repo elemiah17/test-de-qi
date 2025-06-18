@@ -1,194 +1,398 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Test de Raisonnement Logique Visuel - IQ Test</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f4; color: #333; margin: 0; padding: 0; }
-    .container { max-width: 800px; margin: 20px auto; padding: 20px; background: #fff; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
-    h1, h2 { text-align: center; }
-    #timer { font-weight: bold; text-align: center; margin-bottom: 10px; }
-    .sequence, .choices { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
-    .canvas-item { margin: 0 10px; cursor: pointer; border: 2px solid transparent; border-radius: 4px; }
-    .canvas-item.selected { border-color: #007BFF; }
-    button { padding: 10px 20px; border: none; border-radius: 4px; background: #007BFF; color: #fff; cursor: pointer; display: block; margin: 10px auto; }
-    button:disabled { background: #999; cursor: not-allowed; }
-    .hidden { display: none; }
-    .result { text-align: center; }
-    p.notice { font-size: 0.9em; color: #666; text-align: center; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quiz de Logique Interactive</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #e0f7fa, #b2ebf2);
+    color: #333;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .container {
+    max-width: 800px;
+    margin: 40px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    animation: fadeIn 0.5s ease-in;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  h1 {
+    text-align: center;
+    color: #00695c;
+    font-size: 2.2em;
+    margin-bottom: 10px;
+  }
+  .intro {
+    text-align: center;
+    color: #555;
+    font-style: italic;
+    max-width: 600px;
+    margin: 0 auto 30px;
+    font-size: 1.1em;
+  }
+  .question {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    transition: transform 0.2s;
+  }
+  .question:hover {
+    transform: translateY(-2px);
+  }
+  .question p {
+    font-weight: 600;
+    margin-bottom: 15px;
+    font-size: 1.15em;
+  }
+  label {
+    display: flex;
+    align-items: center;
+    margin: 10px 0;
+    cursor: pointer;
+    font-size: 1.05em;
+    padding: 10px;
+    border-radius: 6px;
+    transition: background 0.2s;
+  }
+  label:hover {
+    background: #e0f2f1;
+  }
+  input[type="radio"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+  }
+  input[type="text"] {
+    margin-top: 10px;
+    padding: 8px;
+    width: 95%;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1em;
+  }
+  button {
+    display: block;
+    margin: 30px auto;
+    padding: 12px 30px;
+    background: #00695c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background 0.2s;
+  }
+  button:hover:not(:disabled) {
+    background: #004d40;
+  }
+  button:disabled {
+    background: #b0bec5;
+    cursor: not-allowed;
+  }
+  .result {
+    margin-top: 30px;
+    padding: 20px;
+    background: #e8f5e9;
+    color: #1b5e20;
+    border-radius: 8px;
+    animation: slideIn 0.5s ease-in;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .result h3 {
+    margin-top: 0;
+    color: #2e7d32;
+  }
+  .footer {
+    text-align: center;
+    margin: 40px 0;
+    font-size: 0.9em;
+    color: #666;
+    flex-grow: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .progress {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1em;
+    color: #00695c;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>Test de Raisonnement Logique Visuel</h1>
-    <div id="start-screen">
-      <p class="notice">Ce test évalue le raisonnement logique visuel à partir de séquences de figures. Il est indicatif et non clinique.</p>
-      <button id="start-btn">Commencer le test</button>
-    </div>
-    <div id="test-screen" class="hidden">
-      <h2>Question <span id="current-index"></span> / <span id="total-questions"></span></h2>
-      <p id="timer">Temps restant: <span id="time-remaining"></span> s</p>
-      <div id="question-area"></div>
-      <button id="next-btn" disabled>Suivant</button>
-    </div>
-    <div id="result-screen" class="hidden">
-      <h2>Résultat</h2>
-      <p class="result" id="score-text"></p>
-      <p class="result" id="iq-text"></p>
-      <p class="result" id="level-text"></p>
-      <button id="restart-btn">Reprendre le test</button>
-    </div>
-  </div>
-  <script>
-    function drawPolygon(ctx, sides, size) {
-      const width = ctx.canvas.width;
-      const height = ctx.canvas.height;
-      const cx = width / 2;
-      const cy = height / 2;
-      const radius = size;
-      ctx.clearRect(0, 0, width, height);
-      ctx.beginPath();
-      for (let i = 0; i < sides; i++) {
-        const angle = (2 * Math.PI * i / sides) - Math.PI / 2;
-        const x = cx + radius * Math.cos(angle);
-        const y = cy + radius * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+<div class="container">
+  <h1>Quiz de Logique Interactive</h1>
+  <p class="intro">Testez votre raisonnement logique avec ce quiz engageant ! Réfléchissez librement, choisissez vos réponses, et découvrez un profil personnalisé avec une estimation indicative de votre QI. Pas de pression, juste du plaisir à raisonner !</p>
+  <div class="progress" id="progress">Question 1 / 25</div>
+  <form id="quizForm">
+    <!-- Questions générées ici -->
+  </form>
+  <button id="submitBtn" type="button" disabled>Voir mes résultats</button>
+  <div id="result" class="result" style="display:none;"></div>
+</div>
+
+<script>
+const questions = [
+  {
+    question: "Quelle est la prochaine figure dans la série : ▲, ⬛, ⬟, ?",
+    choices: ["⬣ (6 côtés)", "⬢ (8 côtés)", "⬠ (5 côtés)", "Autre"],
+    correct: "⬣ (6 côtés)"
+  },
+  {
+    question: "Complétez la suite logique : 2, 6, 12, 20, 30, ?",
+    choices: ["42", "36", "48", "Autre"],
+    correct: "42"
+  },
+  {
+    question: "Complétez l'analogie : Chaud est à Froid comme Jour est à ?",
+    choices: ["Nuit", "Matin", "Soleil", "Autre"],
+    correct: "Nuit"
+  },
+  {
+    question: "Quelle figure a exactement 5 côtés ?",
+    choices: ["⬠ (5 côtés)", "⬟ (6 côtés)", "▲ (3 côtés)", "Autre"],
+    correct: "⬠ (5 côtés)"
+  },
+  {
+    question: "Si A=1, B=2, C=3, que vaut C + B + A ?",
+    choices: ["6", "8", "10", "Autre"],
+    correct: "6"
+  },
+  {
+    question: "Quelle est la prochaine lettre dans la série : A, C, E, G, ?",
+    choices: ["I", "H", "J", "Autre"],
+    correct: "I"
+  },
+  {
+    question: "Complétez la suite : 1, 4, 9, 16, 25, ?",
+    choices: ["36", "30", "49", "Autre"],
+    correct: "36"
+  },
+  {
+    question: "Si un train part à 15h et met 3h pour arriver, à quelle heure arrive-t-il ?",
+    choices: ["18h", "17h", "19h", "Autre"],
+    correct: "18h"
+  },
+  {
+    question: "Quel est l’intrus parmi : 2, 4, 6, 7, 8 ?",
+    choices: ["7", "6", "4", "Autre"],
+    correct: "7"
+  },
+  {
+    question: "Complétez l'analogie : Chat est à Chaton comme Chien est à ?",
+    choices: ["Chiot", "Cochon", "Caniche", "Autre"],
+    correct: "Chiot"
+  },
+  {
+    question: "Quelle forme a le plus de côtés ?",
+    choices: ["⬡ (10 côtés)", "⬢ (8 côtés)", "⬣ (7 côtés)", "Autre"],
+    correct: "⬡ (10 côtés)"
+  },
+  {
+    question: "Si 2 + 3 = 10, 3 + 4 = 21, alors 4 + 5 = ?",
+    choices: ["36", "45", "54", "Autre"],
+    correct: "36"
+  },
+  {
+    question: "Quelle est la prochaine figure dans la série : ◯, ◯◯, ◯◯◯, ?",
+    choices: ["◯◯◯◯", "◯◯◯◯◯", "◯◯", "Autre"],
+    correct: "◯◯◯◯"
+  },
+  {
+    question: "Complétez la suite : 5, 10, 20, 40, ?",
+    choices: ["80", "60", "100", "Autre"],
+    correct: "80"
+  },
+  {
+    question: "Si vous mélangez du jaune et du bleu, quelle couleur obtenez-vous ?",
+    choices: ["Vert", "Orange", "Violet", "Autre"],
+    correct: "Vert"
+  },
+  {
+    question: "Quel nombre complète la suite : 1, 1, 2, 3, 5, 8, ?",
+    choices: ["13", "10", "15", "Autre"],
+    correct: "13"
+  },
+  {
+    question: "Si une semaine a 7 jours, combien y a-t-il de jours dans 4 semaines ?",
+    choices: ["28", "30", "21", "Autre"],
+    correct: "28"
+  },
+  {
+    question: "Quelle figure a le même nombre de côtés que la lettre E a de traits horizontaux ?",
+    choices: ["▲ (3 côtés)", "⬛ (4 côtés)", "⬟ (5 côtés)", "Autre"],
+    correct: "▲ (3 côtés)"
+  },
+  {
+    question: "Si je double un nombre et ajoute 3, j’obtiens 13. Quel est ce nombre ?",
+    choices: ["5", "7", "10", "Autre"],
+    correct: "5"
+  },
+  {
+    question: "Quel mot ne va pas avec les autres : Chien, Chat, Voiture, Lapin ?",
+    choices: ["Voiture", "Chat", "Chien", "Autre"],
+    correct: "Voiture"
+  },
+  {
+    question: "Si un rectangle a une longueur de 6 et une largeur de 3, quelle est sa surface ?",
+    choices: ["18", "12", "9", "Autre"],
+    correct: "18"
+  },
+  {
+    question: "Quelle figure possède exactement 4 côtés égaux et 4 angles droits ?",
+    choices: ["⬛ (Carré)", "▲ (Triangle)", "⬟ (Pentagone)", "Autre"],
+    correct: "⬛ (Carré)"
+  },
+  {
+    question: "Quel est le prochain nombre dans la suite : 3, 5, 8, 13, 21, ?",
+    choices: ["34", "31", "36", "Autre"],
+    correct: "34"
+  },
+  {
+    question: "Complétez l’analogie : Oiseau est à Voler comme Poisson est à ?",
+    choices: ["Nager", "Courir", "Sauter", "Autre"],
+    correct: "Nager"
+  },
+  {
+    question: "Si un seau se remplit à raison de 2 litres par minute, combien d’eau y aura-t-il après 5 minutes ?",
+    choices: ["10 litres", "8 litres", "7 litres", "Autre"],
+    correct: "10 litres"
+  }
+];
+
+// Générer les questions dynamiquement
+const form = document.getElementById('quizForm');
+questions.forEach((q, i) => {
+  const divQ = document.createElement('div');
+  divQ.className = 'question';
+  let htmlQ = `<p>${q.question}</p>`;
+  q.choices.forEach((choice, j) => {
+    const id = `q${i}_c${j}`;
+    htmlQ += `<label for="${id}"><input type="radio" name="q${i}" id="${id}" value="${choice}"> ${choice}</label>`;
+    if (choice.toLowerCase().startsWith("autre")) {
+      htmlQ += `<input type="text" id="text_q${i}" name="text_q${i}" placeholder="Précisez votre réponse..." style="display:none;" />`;
+    }
+  });
+  divQ.innerHTML = htmlQ;
+  form.appendChild(divQ);
+});
+
+// Mettre à jour la progression et activer le bouton
+form.addEventListener('change', (e) => {
+  if (!e.target.name) return;
+  const qIndex = e.target.name.match(/^q(\d+)/);
+  if (!qIndex) return;
+  const i = parseInt(qIndex[1]);
+  const radios = form[`q${i}`];
+  let showText = false;
+  if (radios.length) {
+    for (const r of radios) {
+      if (r.checked && r.value.toLowerCase().startsWith("autre")) {
+        showText = true;
+        break;
       }
-      ctx.closePath();
-      ctx.strokeStyle = '#333';
-      ctx.lineWidth = 3;
-      ctx.stroke();
     }
-
-    const questions = [
-      { seq: [3,4,5], choices: [6,7,8,9], answer: 6 },
-      { seq: [4,5,6], choices: [7,8,9,5], answer: 7 },
-      { seq: [5,6,7], choices: [8,6,9,4], answer: 8 },
-      { seq: [6,7,8], choices: [9,8,10,11], answer: 9 },
-      { seq: [7,8,9], choices: [10,11,9,8], answer: 10 },
-      { seq: [8,9,10], choices: [11,12,9,7], answer: 11 },
-      { seq: [3,5,7], choices: [9,11,13,10], answer: 9 },
-      { seq: [4,7,10], choices: [13,16,14,12], answer: 13 },
-      { seq: [5,9,13], choices: [17,16,15,14], answer: 17 },
-      { seq: [6,11,16], choices: [21,20,19,18], answer: 21 },
-      { seq: [3,6,12], choices: [24,18,15,21], answer: 24 },
-      { seq: [4,8,16], choices: [32,24,20,12], answer: 32 },
-      { seq: [5,10,20], choices: [40,25,30,35], answer: 40 },
-      { seq: [6,12,24], choices: [48,36,30,42], answer: 48 },
-      { seq: [7,14,28], choices: [56,42,49,35], answer: 56 }
-    ];
-
-    let currentIndex = 0;
-    let score = 0;
-    let timerInterval;
-    const timePerQuestion = 45;
-
-    const startBtn = document.getElementById('start-btn');
-    const startScreen = document.getElementById('start-screen');
-    const testScreen = document.getElementById('test-screen');
-    const currentIndexEl = document.getElementById('current-index');
-    const totalQuestionsEl = document.getElementById('total-questions');
-    const timerEl = document.getElementById('time-remaining');
-    const questionArea = document.getElementById('question-area');
-    const nextBtn = document.getElementById('next-btn');
-    const resultScreen = document.getElementById('result-screen');
-    const scoreText = document.getElementById('score-text');
-    const iqText = document.getElementById('iq-text');
-    const levelText = document.getElementById('level-text');
-    const restartBtn = document.getElementById('restart-btn');
-
-    function startTest() {
-      startScreen.classList.add('hidden');
-      testScreen.classList.remove('hidden');
-      currentIndex = 0;
-      score = 0;
-      totalQuestionsEl.textContent = questions.length;
-      showQuestion();
+  } else {
+    showText = radios.checked && radios.value.toLowerCase().startsWith("autre");
+  }
+  const textInput = document.getElementById(`text_q${i}`);
+  if (textInput) {
+    textInput.style.display = showText ? "block" : "none";
+    if (!showText) textInput.value = "";
+  }
+  const allAnswered = questions.every((_, idx) => {
+    const val = form[`q${idx}`].value;
+    if (!val) return false;
+    if (val.toLowerCase().startsWith("autre")) {
+      const txtVal = form[`text_q${idx}`].value.trim();
+      return txtVal.length > 0;
     }
+    return true;
+  });
+  document.getElementById('submitBtn').disabled = !allAnswered;
+  const answeredCount = questions.reduce((acc, _, idx) => acc + (form[`q${idx}`].value ? 1 : 0), 0);
+  document.getElementById('progress').textContent = `Question ${answeredCount + 1} / ${questions.length}`;
+});
 
-    function showQuestion() {
-      clearInterval(timerInterval);
-      nextBtn.disabled = true;
-      questionArea.innerHTML = '';
-      currentIndexEl.textContent = currentIndex + 1;
-      let timeLeft = timePerQuestion;
-      timerEl.textContent = timeLeft;
-      timerInterval = setInterval(() => {
-        timeLeft--;
-        timerEl.textContent = timeLeft;
-        if (timeLeft <= 0) {
-          clearInterval(timerInterval);
-          recordAnswer(null);
-        }
-      }, 1000);
-
-      const q = questions[currentIndex];
-      const seqDiv = document.createElement('div'); seqDiv.classList.add('sequence');
-      q.seq.forEach(sides => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 80; canvas.height = 80;
-        canvas.classList.add('canvas-item');
-        const ctx = canvas.getContext('2d');
-        drawPolygon(ctx, sides, 30);
-        seqDiv.appendChild(canvas);
-      });
-      questionArea.appendChild(seqDiv);
-
-      const choicesDiv = document.createElement('div'); choicesDiv.classList.add('choices');
-      q.choices.forEach(choiceSides => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 80; canvas.height = 80;
-        canvas.classList.add('canvas-item');
-        const ctx = canvas.getContext('2d');
-        drawPolygon(ctx, choiceSides, 30);
-        canvas.dataset.choice = choiceSides;
-        canvas.addEventListener('click', () => {
-          document.querySelectorAll('.canvas-item').forEach(c=>c.classList.remove('selected'));
-          canvas.classList.add('selected');
-          nextBtn.disabled = false;
-        });
-        choicesDiv.appendChild(canvas);
-      });
-      questionArea.appendChild(choicesDiv);
-      nextBtn.onclick = () => {
-        const selected = document.querySelector('.canvas-item.selected');
-        const userChoice = selected ? parseInt(selected.dataset.choice) : null;
-        recordAnswer(userChoice);
-      };
+// Évaluer les réponses
+function evaluateResponses() {
+  const answers = questions.map((_, i) => {
+    const val = form[`q${i}`].value;
+    if (val.toLowerCase().startsWith("autre")) {
+      return form[`text_q${i}`].value.trim() || val;
     }
+    return val;
+  });
+  const autreCount = answers.filter(a => a.toLowerCase().includes("autre")).length;
+  const correctCount = answers.reduce((acc, a, i) => acc + (a === questions[i].correct ? 1 : 0), 0);
+  const scoreCorrect = (correctCount / questions.length) * 100;
+  const scoreCreativite = (autreCount / questions.length) * 100;
+  
+  // Estimation simplifiée du QI (non scientifique)
+  const qiEstimate = Math.round(70 + (scoreCorrect * 0.6) + (scoreCreativite * 0.2));
+  
+  // Feedback basé sur le QI
+  let feedback = "";
+  if (qiEstimate < 85) {
+    feedback = "Votre QI estimé est inférieur à la moyenne. Prenez le temps de pratiquer des exercices de logique pour renforcer votre concentration et vos compétences.";
+  } else if (qiEstimate < 100) {
+    feedback = "Votre QI estimé est proche de la moyenne. Avec un peu plus d’entraînement et de focus, vous pouvez affiner votre raisonnement logique.";
+  } else if (qiEstimate < 115) {
+    feedback = "Votre QI estimé est dans la moyenne supérieure. Continuez à explorer des problèmes variés pour développer encore vos capacités.";
+  } else if (qiEstimate < 130) {
+    feedback = "Votre QI estimé indique un potentiel logique élevé. Poursuivez avec des défis complexes pour maximiser vos compétences.";
+  } else {
+    feedback = "Votre QI estimé est supérieur (exceptionnel). Votre raisonnement est remarquable ; continuez à explorer des problèmes avancés pour nourrir votre talent.";
+  }
+  
+  // Profil basé sur les choix
+  let profil = "";
+  if (scoreCorrect > 70 && scoreCreativite < 20) {
+    profil = "Vous êtes un penseur méthodique, privilégiant des solutions logiques et structurées. Votre approche est rigoureuse et fiable.";
+  } else if (scoreCreativite > 50) {
+    profil = "Vous êtes un esprit créatif, explorant des solutions originales et hors des sentiers battus. Votre imagination est votre atout !";
+  } else {
+    profil = "Vous combinez habilement logique classique et créativité, adaptant votre réflexion aux défis rencontrés.";
+  }
+  
+  return { profil, qiEstimate, feedback, scoreCorrect, scoreCreativite };
+}
 
-    function recordAnswer(choice) {
-      clearInterval(timerInterval);
-      const q = questions[currentIndex];
-      if (choice !== null && choice === q.answer) score++;
-      currentIndex++;
-      if (currentIndex < questions.length) showQuestion();
-      else showResult();
-    }
-
-    function showResult() {
-      testScreen.classList.add('hidden');
-      resultScreen.classList.remove('hidden');
-      scoreText.textContent = `Vous avez ${score} bonnes réponses sur ${questions.length}.`;
-      const ratio = score / questions.length;
-      const estimatedIQ = Math.round(70 + ratio * 60);
-      iqText.textContent = `IQ estimé (approx.): ${estimatedIQ}`;
-      let level;
-      if (estimatedIQ >= 130) level = 'Très supérieur (HPI possible)';
-      else if (estimatedIQ >= 120) level = 'Supérieur';
-      else if (estimatedIQ >= 110) level = 'Légèrement supérieur';
-      else if (estimatedIQ >= 90) level = 'Moyen';
-      else level = 'Inférieur à la moyenne';
-      levelText.textContent = `Niveau estimé : ${level}`;
-    }
-
-    startBtn.addEventListener('click', startTest);
-    restartBtn.addEventListener('click', () => {
-      resultScreen.classList.add('hidden');
-      startScreen.classList.remove('hidden');
-    });
-  </script>
+// Afficher les résultats
+document.getElementById('submitBtn').addEventListener('click', () => {
+  const { profil, qiEstimate, feedback } = evaluateResponses();
+  const resultDiv = document.getElementById('result');
+  resultDiv.style.display = 'block';
+  resultDiv.innerHTML = `
+    <h3>Votre Profil Logique</h3>
+    <p>${profil}</p>
+    <p><strong>Estimation indicative de votre QI :</strong> ${qiEstimate}</p>
+    <p><strong>Conseil :</strong> ${feedback}</p>
+    <p><em>Merci d’avoir participé ! Continuez à explorer votre raisonnement avec curiosité.</em></p>
+  `;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+</script>
+<div class="footer">
+  <p>Ce quiz est anonyme et indicatif. Pour une évaluation professionnelle, consultez un spécialiste.</p>
+</div>
 </body>
 </html>
